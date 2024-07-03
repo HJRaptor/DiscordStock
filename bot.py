@@ -1,6 +1,10 @@
 import discord
 from discord import member
 import yfinance
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 #intents
 intents = discord.Intents.all()
@@ -35,5 +39,5 @@ async def info(ctx, symbol: str):
 async def on_ready():
     print(f"We have logged in as {bot.user}")
 
-bot.run("MTI1ODE2MjcxNzY3MjYwNzg5Ng.GERP2P.Ul9xs7hwQ62nsokNt0DMBWdjEWRHVyc0GIL6yo")
+bot.run(os.environ.get('token'))
 
