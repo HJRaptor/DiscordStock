@@ -1,3 +1,3 @@
 # DiscordStock
-Hack club Arcade
+Hack club Arcade.
 A discord bot to simulate the stock market.
