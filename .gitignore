@@ -1,3 +1,2 @@
-token.txt
-token.env
-*.env
+.env
+
