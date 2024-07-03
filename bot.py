@@ -29,7 +29,7 @@ async def info(ctx, symbol: str):
     stockembed.add_field(name="Day Low", value=daylow)
     stockembed.add_field(name="Day Low", value=dayhigh)
     stockembed.set_footer(text="HJRaptor - 2024")
-    stockembed.ad
+    
 
     
     await ctx.respond(embed=stockembed)
