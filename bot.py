@@ -9,9 +9,7 @@ intents.members = True
 bot = discord.Bot(intents=intents)
 
 
-@bot.event
-async def on_ready():
-    print(f"We have logged in as {bot.user}")
+
 
 @bot.slash_command(guild_ids=[903618670700417065])
 async def info(ctx, symbol: str):
@@ -20,5 +18,8 @@ async def info(ctx, symbol: str):
     await ctx.respond(regular_market_open)
     
 
-bot.run()
+@bot.event
+async def on_ready():
+    print(f"We have logged in as {bot.user}")
+bot.run("MTI1ODE2MjcxNzY3MjYwNzg5Ng.GERP2P.Ul9xs7hwQ62nsokNt0DMBWdjEWRHVyc0GIL6yo")
 
