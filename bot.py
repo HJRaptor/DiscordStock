@@ -72,17 +72,18 @@ async def info(ctx, symbol: str):
 
 @bot.slash_command(guild_ids=[903618670700417065])
 async def portfolio(ctx, symbol: str):
-    userid = ctx.author.id
+    userid = str(ctx.author.id)
     print(userid)
     mydb = sqlite3.connect("data.db")
     cursor = mydb.cursor()
-    cursor.execute('''SELECT FROM Portfolio WHERE ''',(userid))
-
+    cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
+    balance = cursor.fetchall()
+    balance = balance[0][0]
 
     
 
     
-    await ctx.respond("ok")
+    await ctx.respond(balance)
 
 
 @bot.slash_command(guild_ids=[903618670700417065])
