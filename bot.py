@@ -35,6 +35,7 @@ async def info(ctx, symbol: str):
     daylow = selectedStock.info['dayLow']
     dayhigh = selectedStock.info['dayHigh']
     divYield = selectedStock.info.get('dividendYield',None)
+    newsFinance = selectedStock.news
     #graphing
     result = pd.DataFrame(yfinance.download(symbol, start=start,end=end)['Open'])     
     plt.plot(result)
@@ -57,8 +58,14 @@ async def info(ctx, symbol: str):
         stockembed.add_field(name="Annual Dividend Yield", value=str(divYield)+"%")
     stockembed.set_image(url="attachment://graph.png")
     stockembed.set_footer(text="HJRaptor - 2024")
-    
-    
+
+    for news in newsFinance[:2]:
+        title = news['title']
+        publisher = news['publisher']
+        link = news['link']
+        stockembed.add_field(name=title, value=f"Publisher: {publisher}\n[Read More]({link})", inline=False)
+
+
     await ctx.respond(embed=stockembed, file=image)
     
 
