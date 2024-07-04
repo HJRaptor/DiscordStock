@@ -6,6 +6,7 @@ import os
 import pandas as pd
 from datetime import date, timedelta
 from matplotlib import pyplot as plt
+import sqlite3
 
 
 load_dotenv()
@@ -71,11 +72,32 @@ async def info(ctx, symbol: str):
 
 @bot.slash_command(guild_ids=[903618670700417065])
 async def portfolio(ctx, symbol: str):
-    
+    userid = ctx.author.id
+    print(userid)
+    mydb = sqlite3.connect("data.db")
+    cursor = mydb.cursor()
+    cursor.execute('''SELECT FROM Portfolio WHERE ''',(userid))
+
+
     
 
     
-    await ctx.respond()
+    await ctx.respond("ok")
+
+
+@bot.slash_command(guild_ids=[903618670700417065])
+async def login(ctx):
+    userid = ctx.author.id
+    print(userid)
+    mydb = sqlite3.connect("data.db")
+    cursor = mydb.cursor()
+    cursor.execute('''INSERT INTO Portfolio VALUES(?)''',(userid))
+
+
+    
+
+    
+    await ctx.respond("Logged in")
 
 
 @bot.event
