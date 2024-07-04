@@ -156,14 +156,28 @@ async def portfolio(ctx):
     print(userid)
     mydb = sqlite3.connect("data.db")
     cursor = mydb.cursor()
+    cursor.execute('''SELECT ticker,quantity,price FROM Stocks WHERE userid=?''',(userid,))
+    account = cursor.fetchall()
+    print(account)
     cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
     balance = cursor.fetchall()
     balance = balance[0][0]
+
+    balance = round(balance,2)
+    #embed
+    portfolioembed = discord.Embed(title=portfolio,color=discord.Colour.blurple())
+    
+    portfolioembed.add_field(name="Wallet",value=balance, inline=False)
+    for i in range(len(account)):
+        total = float(account[i][1])*float(account[i][2])
+        portfolioembed.add_field(name=account[i][0], value=f"Quantity : {account[i][1]}\nStock Price : {account[i][2]}\n Total = {str(total)}")
+    
+
     mydb.close()
     
 
     
-    await ctx.respond("$" + str(round(balance,2)))
+    await ctx.respond(embed=portfolioembed)
 
 @bot.slash_command(guild_ids=[903618670700417065])
 async def buy(ctx, symbol: str, quantity: str):
