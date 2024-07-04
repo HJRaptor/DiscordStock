@@ -26,6 +26,25 @@ end = date.today() + timedelta(2)
 end.strftime('%Y-%m-%d')
 
 
+async def purchase(userid,ticker,quantity):
+    mydb = sqlite3.connect("data.db")
+    cursor = mydb.cursor()
+    stock = yfinance.Ticker(ticker)
+    stockvalue = stock.info['regularMarketOpen']
+    
+    cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
+    currentbalance = cursor.fetchall()
+    currentbalance = currentbalance[0][0]
+
+    remainingbalance = currentbalance-(stockvalue*quantity)
+    cursor.execute('''INSERT INTO Stocks VALUES(?,?,?,?)''',(userid,ticker,quantity,stockvalue,))
+    cursor.execute('''UPDATE Portfolio SET Balance=?''',(remainingbalance,))
+    mydb.commit()
+    mydb.close()
+    print("dones")
+
+
+
 @bot.slash_command(guild_ids=[903618670700417065])
 async def info(ctx, symbol: str):
     selectedStock = yfinance.Ticker(symbol)
@@ -79,12 +98,19 @@ async def portfolio(ctx, symbol: str):
     cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
     balance = cursor.fetchall()
     balance = balance[0][0]
-
+    mydb.close()
     
 
     
     await ctx.respond(balance)
 
+@bot.slash_command(guild_ids=[903618670700417065])
+async def buy(ctx, symbol: str, quantity: str):
+    locuserid = str(ctx.author.id)
+    
+    await purchase(locuserid,symbol,int(quantity))
+    await ctx.respond("Purchase complete")
+    
 
 @bot.slash_command(guild_ids=[903618670700417065])
 async def login(ctx):
@@ -99,6 +125,8 @@ async def login(ctx):
 
     
     await ctx.respond("Logged in")
+
+
 
 
 @bot.event
