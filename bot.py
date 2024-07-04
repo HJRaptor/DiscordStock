@@ -25,6 +25,10 @@ start.strftime('%Y-%m-%d')
 end = date.today() + timedelta(2)
 end.strftime('%Y-%m-%d')
 
+async def updatestockprices(userid):
+    mydb = sqlite3.connect("data.db")
+    cursor = mydb.cursor()
+
 
 async def purchase(userid,ticker,quantity):
     mydb = sqlite3.connect("data.db")
@@ -32,17 +36,47 @@ async def purchase(userid,ticker,quantity):
     stock = yfinance.Ticker(ticker)
     stockvalue = stock.info['regularMarketOpen']
     
-    cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
-    currentbalance = cursor.fetchall()
-    currentbalance = currentbalance[0][0]
+    existing = await stockexists(user_id=userid,symbol=ticker)
+    if existing:
+        
+        cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
+        currentbalance = cursor.fetchall()
+        currentbalance = currentbalance[0][0]
 
-    remainingbalance = currentbalance-(stockvalue*quantity)
-    cursor.execute('''INSERT INTO Stocks VALUES(?,?,?,?)''',(userid,ticker,quantity,stockvalue,))
-    cursor.execute('''UPDATE Portfolio SET Balance=?''',(remainingbalance,))
-    mydb.commit()
-    mydb.close()
-    print("dones")
 
+        cursor.execute('''SELECT quantity FROM Stocks WHERE userid=? AND ticker=?''', (userid,ticker,))
+        currentquantity = cursor.fetchall()
+        currentquantity = currentquantity[0][0]
+        newquantity = quantity + currentquantity
+        cursor.execute('''UPDATE Stocks SET quantity=? ,price=? WHERE userid=? AND ticker=?''',(newquantity,stockvalue,userid,ticker,))
+
+        remainingbalance = currentbalance-(stockvalue*quantity)
+        cursor.execute('''UPDATE Portfolio SET Balance=? WHERE userid=?''',(remainingbalance,userid,))
+        mydb.commit()
+        mydb.close()
+        print("done")
+
+    else:
+        
+        cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
+        currentbalance = cursor.fetchall()
+        currentbalance = currentbalance[0][0]
+
+        remainingbalance = currentbalance-(stockvalue*quantity)
+        cursor.execute('''INSERT INTO Stocks VALUES(?,?,?,?)''',(userid,ticker,quantity,stockvalue,))
+        cursor.execute('''UPDATE Portfolio SET Balance=? WHERE userid=?''',(remainingbalance,userid,))
+        mydb.commit()
+        mydb.close()
+        print("dones")
+
+
+async def stockexists(user_id, symbol):
+    mydb = sqlite3.connect("data.db")
+    cursor = mydb.cursor()
+    cursor.execute('''SELECT * FROM Stocks WHERE userid=? AND ticker=?''', (user_id, symbol))
+    existing_stock = cursor.fetchone()
+    cursor.close()
+    return existing_stock
 
 
 @bot.slash_command(guild_ids=[903618670700417065])
@@ -108,6 +142,9 @@ async def portfolio(ctx):
 async def buy(ctx, symbol: str, quantity: str):
     locuserid = str(ctx.author.id)
     
+
+    
+
     await purchase(locuserid,symbol,int(quantity))
     await ctx.respond("Purchase complete")
     
