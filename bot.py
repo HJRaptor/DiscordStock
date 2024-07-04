@@ -90,7 +90,7 @@ async def info(ctx, symbol: str):
     
 
 @bot.slash_command(guild_ids=[903618670700417065])
-async def portfolio(ctx, symbol: str):
+async def portfolio(ctx):
     userid = str(ctx.author.id)
     print(userid)
     mydb = sqlite3.connect("data.db")
@@ -102,7 +102,7 @@ async def portfolio(ctx, symbol: str):
     
 
     
-    await ctx.respond(balance)
+    await ctx.respond("$" + str(round(balance,2)))
 
 @bot.slash_command(guild_ids=[903618670700417065])
 async def buy(ctx, symbol: str, quantity: str):
