@@ -34,14 +34,9 @@ async def info(ctx, symbol: str):
     regular_market_open = selectedStock.info['regularMarketOpen']
     daylow = selectedStock.info['dayLow']
     dayhigh = selectedStock.info['dayHigh']
-
-    if selectedStock.info['dividendYield'] in selectedStock.info:
-        divYield = float(selectedStock.info['dividendYield'])*100
-    else:
-        divYield = None
-
+    divYield = selectedStock.info.get('dividendYield',None)
     #graphing
-    result = pd.DataFrame(yfinance.download(symbol, start=start,end=end)['Adj Close'])     
+    result = pd.DataFrame(yfinance.download(symbol, start=start,end=end)['Open'])     
     plt.plot(result)
     plt.ylabel('Price ($)')
     plt.xlabel('Date')
@@ -55,8 +50,10 @@ async def info(ctx, symbol: str):
     stockembed = discord.Embed(title=name,color=discord.Colour.blurple())
     stockembed.add_field(name="Market Open",value=regular_market_open)
     stockembed.add_field(name="Day Low", value=daylow)
-    stockembed.add_field(name="Day Low", value=dayhigh)
+    stockembed.add_field(name="Day High", value=dayhigh)
     if divYield != None:
+        divYield = float(divYield)*100
+        divYield = round(divYield,2)
         stockembed.add_field(name="Annual Dividend Yield", value=str(divYield)+"%")
     stockembed.set_image(url="attachment://graph.png")
     stockembed.set_footer(text="HJRaptor - 2024")
