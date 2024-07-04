@@ -25,9 +25,36 @@ start.strftime('%Y-%m-%d')
 end = date.today() + timedelta(2)
 end.strftime('%Y-%m-%d')
 
-async def updatestockprices(userid):
+# async def updatestockprices(userid):
+#     mydb = sqlite3.connect("data.db")
+#     cursor = mydb.cursor()
+
+
+async def sellfunc(userid,ticker,quantity):
     mydb = sqlite3.connect("data.db")
     cursor = mydb.cursor()
+    stock = yfinance.Ticker(ticker)
+    stockvalue = stock.info['regularMarketOpen']
+
+    cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
+    currentbalance = cursor.fetchall()
+    currentbalance = currentbalance[0][0]
+
+    remainingbalance = currentbalance+(stockvalue*quantity)
+    cursor.execute('''UPDATE Portfolio SET Balance=? WHERE userid=?''',(remainingbalance,userid,))
+
+    cursor.execute('''SELECT quantity FROM Stocks WHERE userid=? AND ticker=?''', (userid,ticker,))
+    currentquantity = cursor.fetchall()
+    currentquantity = currentquantity[0][0]
+    newquantity = currentquantity - quantity
+    cursor.execute('''UPDATE Stocks SET quantity=? ,price=? WHERE userid=? AND ticker=?''',(newquantity,stockvalue,userid,ticker,))
+
+    mydb.commit()
+    mydb.close()
+
+
+    print("sold")
+
 
 
 async def purchase(userid,ticker,quantity):
@@ -142,12 +169,15 @@ async def portfolio(ctx):
 async def buy(ctx, symbol: str, quantity: str):
     locuserid = str(ctx.author.id)
     
-
-    
-
     await purchase(locuserid,symbol,int(quantity))
     await ctx.respond("Purchase complete")
     
+@bot.slash_command(guild_ids=[903618670700417065])
+async def sell(ctx, symbol: str, quantity: str):
+    userid = str(ctx.author.id)
+
+    await sellfunc(userid,symbol,int(quantity))
+    await ctx.respond("Sold")
 
 @bot.slash_command(guild_ids=[903618670700417065])
 async def login(ctx):
@@ -162,6 +192,7 @@ async def login(ctx):
 
     
     await ctx.respond("Logged in")
+
 
 
 
