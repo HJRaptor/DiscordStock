@@ -62,9 +62,18 @@ async def purchase(userid,ticker,quantity):
     cursor = mydb.cursor()
     stock = yfinance.Ticker(ticker)
     stockvalue = stock.info['regularMarketOpen']
+    enoughBalance = True
     
+    cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
+    currentbalance = cursor.fetchall()
+    currentbalance = currentbalance[0][0]
+
+    if currentbalance-(quantity*stockvalue) < 0:
+        enoughBalance = False
+
+
     existing = await stockexists(user_id=userid,symbol=ticker)
-    if existing:
+    if existing and enoughBalance:
         
         cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
         currentbalance = cursor.fetchall()
@@ -83,7 +92,7 @@ async def purchase(userid,ticker,quantity):
         mydb.close()
         print("done")
 
-    else:
+    elif enoughBalance:
         
         cursor.execute('''SELECT Balance FROM Portfolio WHERE userid=?''', (userid,))
         currentbalance = cursor.fetchall()
@@ -95,6 +104,9 @@ async def purchase(userid,ticker,quantity):
         mydb.commit()
         mydb.close()
         print("dones")
+
+    else:
+        return False
 
 
 async def stockexists(user_id, symbol):
@@ -167,10 +179,10 @@ async def portfolio(ctx):
     #embed
     portfolioembed = discord.Embed(title=portfolio,color=discord.Colour.blurple())
     
-    portfolioembed.add_field(name="Wallet",value=balance, inline=False)
+    portfolioembed.add_field(name="Wallet",value=f"${balance}", inline=False)
     for i in range(len(account)):
         total = float(account[i][1])*float(account[i][2])
-        portfolioembed.add_field(name=account[i][0], value=f"Quantity : {account[i][1]}\nStock Price : {account[i][2]}\n Total = {str(total)}")
+        portfolioembed.add_field(name=account[i][0], value=f"Quantity : {account[i][1]}\nStock Price : {account[i][2]}\n Total = {str(round(total,2))}")
     
 
     mydb.close()
@@ -183,8 +195,12 @@ async def portfolio(ctx):
 async def buy(ctx, symbol: str, quantity: str):
     locuserid = str(ctx.author.id)
     
-    await purchase(locuserid,symbol,int(quantity))
-    await ctx.respond("Purchase complete")
+
+    if await purchase(locuserid,symbol,int(quantity)) == False:
+        await ctx.respond("inadequate balance")
+    else:
+        await purchase(locuserid,symbol,int(quantity))
+        await ctx.respond("Purchase complete")
     
 @bot.slash_command(guild_ids=[903618670700417065])
 async def sell(ctx, symbol: str, quantity: str):
