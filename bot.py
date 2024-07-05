@@ -46,8 +46,23 @@ async def sellfunc(userid,ticker,quantity):
     cursor.execute('''SELECT quantity FROM Stocks WHERE userid=? AND ticker=?''', (userid,ticker,))
     currentquantity = cursor.fetchall()
     currentquantity = currentquantity[0][0]
+
+    if currentquantity - quantity < 0:
+        return False
+
     newquantity = currentquantity - quantity
+
+
+
     cursor.execute('''UPDATE Stocks SET quantity=? ,price=? WHERE userid=? AND ticker=?''',(newquantity,stockvalue,userid,ticker,))
+
+
+    cursor.execute('''SELECT quantity FROM Stocks WHERE userid=? AND ticker=?''', (userid,ticker,))
+    currentquantity = cursor.fetchall()
+    currentquantity = currentquantity[0][0]
+    if currentquantity == 0:
+        cursor.execute('''DELETE FROM Stocks WHERE quantity=0''', (userid,ticker,))
+
 
     mydb.commit()
     mydb.close()
@@ -206,8 +221,12 @@ async def buy(ctx, symbol: str, quantity: str):
 async def sell(ctx, symbol: str, quantity: str):
     userid = str(ctx.author.id)
 
-    await sellfunc(userid,symbol,int(quantity))
-    await ctx.respond("Sold")
+    if await sellfunc(userid,symbol,int(quantity)) == False:
+        await ctx.respond("Quantity is greater than current amount owned.")
+    else:
+        await sellfunc(userid,symbol,int(quantity))
+        await ctx.respond("Sold")
+
 
 @bot.slash_command(guild_ids=[903618670700417065])
 async def login(ctx):
