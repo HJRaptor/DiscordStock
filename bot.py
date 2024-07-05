@@ -25,10 +25,22 @@ start.strftime('%Y-%m-%d')
 end = date.today() + timedelta(2)
 end.strftime('%Y-%m-%d')
 
-# async def updatestockprices(userid):
-#     mydb = sqlite3.connect("data.db")
-#     cursor = mydb.cursor()
+async def updatestockprices(userid):
+    mydb = sqlite3.connect("data.db")
+    cursor = mydb.cursor()
+    userid = str(userid)
+    cursor.execute('''SELECT * FROM Stocks WHERE userid=?''', (userid,))
+    stocksowned = cursor.fetchall()
+    print(stocksowned)
 
+    for i in range(len(stocksowned)):
+        ticker = stocksowned[i][1]
+        updatedstockprice = yfinance.Ticker(ticker)
+        updatedstockprice = updatedstockprice.info['regularMarketOpen']
+        cursor.execute('''UPDATE Stocks SET price=? WHERE ticker=? AND userid=?''', (updatedstockprice, ticker, userid,))
+    
+    mydb.commit()
+    mydb.close()
 
 async def sellfunc(userid,ticker,quantity):
     mydb = sqlite3.connect("data.db")
@@ -214,7 +226,6 @@ async def buy(ctx, symbol: str, quantity: str):
     if await purchase(locuserid,symbol,int(quantity)) == False:
         await ctx.respond("inadequate balance")
     else:
-        await purchase(locuserid,symbol,int(quantity))
         await ctx.respond("Purchase complete")
     
 @bot.slash_command(guild_ids=[903618670700417065])
@@ -224,7 +235,6 @@ async def sell(ctx, symbol: str, quantity: str):
     if await sellfunc(userid,symbol,int(quantity)) == False:
         await ctx.respond("Quantity is greater than current amount owned.")
     else:
-        await sellfunc(userid,symbol,int(quantity))
         await ctx.respond("Sold")
 
 
@@ -254,6 +264,13 @@ async def sellall(ctx):
         await sellfunc(userid,ticker,int(quantity))
 
     await ctx.respond("All stocks sold")
+
+@bot.slash_command(guild_ids=[903618670700417065])
+async def update(ctx):
+    userid = ctx.author.id
+    await updatestockprices(userid)
+    await ctx.respond("Updated stock prices")
+
 
 @bot.event
 async def on_ready():
