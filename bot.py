@@ -40,8 +40,7 @@ async def sellfunc(userid,ticker,quantity):
     currentbalance = cursor.fetchall()
     currentbalance = currentbalance[0][0]
 
-    remainingbalance = currentbalance+(stockvalue*quantity)
-    cursor.execute('''UPDATE Portfolio SET Balance=? WHERE userid=?''',(remainingbalance,userid,))
+    
 
     cursor.execute('''SELECT quantity FROM Stocks WHERE userid=? AND ticker=?''', (userid,ticker,))
     currentquantity = cursor.fetchall()
@@ -51,7 +50,8 @@ async def sellfunc(userid,ticker,quantity):
         return False
 
     newquantity = currentquantity - quantity
-
+    remainingbalance = currentbalance+(stockvalue*quantity)
+    cursor.execute('''UPDATE Portfolio SET Balance=? WHERE userid=?''',(remainingbalance,userid,))
 
 
     cursor.execute('''UPDATE Stocks SET quantity=? ,price=? WHERE userid=? AND ticker=?''',(newquantity,stockvalue,userid,ticker,))
@@ -61,7 +61,7 @@ async def sellfunc(userid,ticker,quantity):
     currentquantity = cursor.fetchall()
     currentquantity = currentquantity[0][0]
     if currentquantity == 0:
-        cursor.execute('''DELETE FROM Stocks WHERE quantity=0''', (userid,ticker,))
+        cursor.execute('''DELETE FROM Stocks WHERE quantity=0''')
 
 
     mydb.commit()
@@ -236,15 +236,24 @@ async def login(ctx):
     cursor = mydb.cursor()
     cursor.execute('''INSERT INTO Portfolio VALUES(?)''',(userid))
 
-
-    
-
-    
     await ctx.respond("Logged in")
 
+@bot.slash_command(guild_ids=[903618670700417065])
+async def sellall(ctx):
+    userid = ctx.author.id
+    userid = str(userid)
+    mydb = sqlite3.connect("data.db")
+    cursor = mydb.cursor()
+    cursor.execute('''SELECT * FROM Stocks WHERE userid=?''', (userid,))
+    stocksowned = cursor.fetchall()
+    print(stocksowned)
 
+    for i in range(len(stocksowned)):
+        ticker = stocksowned[i][1]
+        quantity = stocksowned[i][2]
+        await sellfunc(userid,ticker,int(quantity))
 
-
+    await ctx.respond("All stocks sold")
 
 @bot.event
 async def on_ready():
