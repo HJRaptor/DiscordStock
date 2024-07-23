@@ -246,7 +246,7 @@ async def login(ctx):
     cursor = mydb.cursor()
     cursor.execute('''INSERT INTO Portfolio VALUES(?)''',(userid))
 
-    await ctx.respond("Logged in")
+    await ctx.response.send_message(f"Logged in as{userid}",ephemeral=True)
 
 @bot.slash_command(guild_ids=[903618670700417065])
 async def sellall(ctx):
